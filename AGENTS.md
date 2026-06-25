@@ -1,6 +1,6 @@
 # Prool Assets Agent Guide
 
-This repository stores reviewed image assets for the Prool app.
+This repository stores reviewed static assets for the Prool app.
 
 ## Agent Skills
 
@@ -18,7 +18,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant ADRs before 
 
 ## Repository Rules
 
-- Keep image paths stable, public, and provider-agnostic.
+- Keep asset paths stable, public, and provider-agnostic.
 - Add new published asset versions as new files, such as `v2.png`; do not overwrite existing published versions.
 - Use the identifier and branch name provided by the Linear ticket.
 - Keep the Linear identifier visible in commits, pull requests, and implementation notes.

@@ -1,12 +1,28 @@
 # Prool Assets
 
-Prool Assets is the context for curated image files that are reviewed in Git and published for the Prool app through the public asset CDN.
+Prool Assets is the context for curated static files that are reviewed in Git and published for the Prool app through the public asset CDN.
 
 ## Language
 
 **Asset**:
-A reviewed image file owned by Prool and served by the public asset CDN.
+A reviewed static file owned by Prool and served by the public asset CDN.
 _Avoid_: Media, blob, upload
+
+**Image Asset**:
+An asset that visually represents product content, such as a logo, jersey, icon, or illustration.
+_Avoid_: Image, picture
+
+**Document Asset**:
+An asset that publishes a document for users to read, such as terms and conditions or a privacy policy.
+_Avoid_: PDF, legal file
+
+**Data Asset**:
+An asset that publishes static, public, cacheable structured data.
+_Avoid_: API response, catalog data
+
+**Animation Asset**:
+An asset that publishes static motion content, such as a Lottie animation or short media export.
+_Avoid_: Motion file, animation file
 
 **Source Asset**:
 An editable source file used to produce a public asset.
