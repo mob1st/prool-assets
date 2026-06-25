@@ -11,13 +11,13 @@ https://assets.playprool.com
 Repository paths are public paths. If a file exists at:
 
 ```text
-images/country/england/teams/arsenal/jersey/202627.svg
+images/country/england/teams/arsenal/jersey/2026-27.svg
 ```
 
 it is expected to be served at:
 
 ```text
-https://assets.playprool.com/images/country/england/teams/arsenal/jersey/202627.svg
+https://assets.playprool.com/images/country/england/teams/arsenal/jersey/2026-27.svg
 ```
 
 ## Path Convention
@@ -41,17 +41,20 @@ images/
 Examples:
 
 ```text
-images/country/england/tournaments/premierleague/logo/202627.svg
-images/country/england/teams/arsenal/jersey/202627.svg
+images/country/england/tournaments/premier-league/logo/2026-27.svg
+images/country/england/teams/arsenal/jersey/2026-27.svg
 ```
 
-Use the edition as the version when the asset is season-specific, such as `202627`. For assets that are not tied to a season or edition, use an explicit stable version such as `v1`, `v2`, or `v3`.
+Use the edition as the version when the asset is season-specific, such as `2026-27`. For assets that are not tied to a season or edition, use an explicit stable version such as `v1`, `v2`, or `v3`.
 
 ## Naming Rules
 
-- Use lowercase ASCII path segments.
+- Use lowercase kebab-case path segments.
+- Use only ASCII letters, numbers, and hyphens in slugs.
 - Do not use spaces.
+- Do not use underscores.
 - Do not use provider IDs in public paths.
+- Use singular asset-kind folders, such as `logo` and `jersey`.
 - Keep slugs stable after publication.
 - Prefer existing product or catalog terms when a slug already exists.
 - Review path names carefully because renaming a published path changes the public URL.
@@ -63,8 +66,8 @@ Published asset URLs are immutable. Add a new version instead of replacing an ex
 Good:
 
 ```text
-images/country/england/teams/arsenal/jersey/202627.svg
-images/country/england/teams/arsenal/jersey/202728.svg
+images/country/england/teams/arsenal/jersey/2026-27.svg
+images/country/england/teams/arsenal/jersey/2027-28.svg
 ```
 
 Avoid:

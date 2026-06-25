@@ -14,6 +14,6 @@ images/country/<country-slug>/teams/<team-slug>/<asset-kind>/<version>.<ext>
 Examples:
 
 ```text
-images/country/england/tournaments/premierleague/logo/202627.svg
-images/country/england/teams/arsenal/jersey/202627.svg
+images/country/england/tournaments/premier-league/logo/2026-27.svg
+images/country/england/teams/arsenal/jersey/2026-27.svg
 ```
