@@ -4,10 +4,13 @@ set -euo pipefail
 # This script is run by GitHub Actions after reviewed assets land on main, or
 # when someone manually dispatches the workflow for a specific file/folder sync.
 
+ALLOWED_ASSET_EXTENSIONS="${ALLOWED_ASSET_EXTENSIONS:-svg png webp avif jpg jpeg pdf json lottie mp4 webm mov woff2 woff ttf otf}"
 ASSET_PATH="${ASSET_PATH:-}"
 ASSET_ROOTS="${ASSET_ROOTS:-images documents animations data fonts}"
 PUSH_BEFORE_SHA="${PUSH_BEFORE_SHA:-}"
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-auto}"
+
+AWS_INCLUDE_ARGS=()
 
 require_env() {
   local name="$1"
@@ -24,13 +27,29 @@ validate_configuration() {
   require_env "CLOUDFLARE_ACCOUNT_ID"
   require_env "R2_BUCKET"
 
+  if [[ -z "${ALLOWED_ASSET_EXTENSIONS//[[:space:]]/}" ]]; then
+    echo "ALLOWED_ASSET_EXTENSIONS must include at least one file extension"
+    exit 1
+  fi
+
   if [[ -z "${ASSET_ROOTS//[[:space:]]/}" ]]; then
     echo "ASSET_ROOTS must include at least one asset root"
     exit 1
   fi
 
+  build_aws_include_args
+
   aws --version
   R2_ENDPOINT_URL="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
+}
+
+build_aws_include_args() {
+  local ext
+
+  AWS_INCLUDE_ARGS=(--exclude "*")
+  for ext in ${ALLOWED_ASSET_EXTENSIONS}; do
+    AWS_INCLUDE_ARGS+=(--include "*.${ext}")
+  done
 }
 
 is_skipped_file() {
@@ -58,6 +77,9 @@ normalize_asset_path() {
   while [[ "${path}" == */ ]]; do
     path="${path%/}"
   done
+  while [[ "${path}" == *//* ]]; do
+    path="${path//\/\//\/}"
+  done
 
   case "${path}" in
     ""|/*|..|../*|*/../*|*/..|*\\*)
@@ -69,6 +91,27 @@ normalize_asset_path() {
   validate_asset_root "${path%\/*}"
 
   printf "%s" "${path}"
+}
+
+validate_allowed_file_extension() {
+  local file="$1"
+  local ext
+  local allowed_ext
+
+  if [[ "${file}" != *.* ]]; then
+    echo "Asset file must have an allowed extension: ${file}"
+    exit 1
+  fi
+
+  ext="${file##*.}"
+  for allowed_ext in ${ALLOWED_ASSET_EXTENSIONS}; do
+    if [[ "${ext}" == "${allowed_ext}" ]]; then
+      return 0
+    fi
+  done
+
+  echo "Asset file extension .${ext} is not allowed. Allowed: ${ALLOWED_ASSET_EXTENSIONS}"
+  exit 1
 }
 
 upload_file() {
@@ -88,6 +131,8 @@ upload_file() {
     echo "Asset file does not exist: ${file}"
     exit 1
   fi
+
+  validate_allowed_file_extension "${file}"
 
   # Repository paths are public CDN paths. For example, images/foo.svg becomes
   # https://assets.playprool.com/images/foo.svg.
@@ -121,6 +166,7 @@ upload_folder() {
     --exclude "*/README.md" \
     --exclude ".DS_Store" \
     --exclude "*/.DS_Store" \
+    "${AWS_INCLUDE_ARGS[@]}" \
     --no-overwrite \
     --only-show-errors \
     --no-progress

@@ -144,33 +144,13 @@ git lfs status
 
 ## Deployment
 
-Deployment is intentionally merge-driven for asset changes. After a pull request that changes public assets is merged, automation syncs repository assets to Cloudflare R2, where they are served through the public asset CDN.
+Deployment is merge-driven. After reviewed asset changes land on `main`, GitHub Actions publishes the changed asset files to Cloudflare R2, where they are served from `https://assets.playprool.com`.
 
-The deployment workflow runs on pushes to `main` only when files under public asset roots change. Push-triggered runs upload the changed asset files from that push.
+For the publishing decision and URL mapping rules, see [ADR 0001](docs/adr/0001-publish-assets-to-r2-backed-cdn.md).
 
-Manual workflow runs require an explicit `asset_path`:
-
-```text
-/images/country/england/teams/arsenal/jersey/2026-27.svg
-/images/country/england/teams/arsenal/*
-/images/*
-```
-
-Use a file path to upload one file. Use a folder path ending in `/*` to upload that folder recursively. Empty input is not allowed.
+Manual workflow runs require an explicit `asset_path`: use `/images/.../file.svg` for one file or `/images/.../*` for a recursive folder upload.
 
 Deployment behavior is implemented in `scripts/deploy-assets-to-r2.sh`.
-
-The workflow uploads files from these top-level asset roots:
-
-```text
-images/
-documents/
-animations/
-data/
-fonts/
-```
-
-`README.md` files and local system files such as `.DS_Store` are not uploaded.
 
 ### GitHub Configuration
 
@@ -189,7 +169,7 @@ R2_BUCKET
 
 The workflow uploads missing asset files to R2 and never deletes remote objects. Existing R2 objects are not overwritten, so published versioned URLs remain immutable.
 
-Manual folder uploads are recursive only when the path ends in `/*`. Without `*`, the path is interpreted as a single file and fails if it points to a folder.
+Allowed publish extensions are listed in `.github/workflows/deploy-assets-to-r2.yml` as `ALLOWED_ASSET_EXTENSIONS`.
 
 All uploaded files use:
 
