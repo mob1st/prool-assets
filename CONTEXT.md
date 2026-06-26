@@ -41,7 +41,7 @@ The path under `https://assets.playprool.com` where a published asset is availab
 _Avoid_: Object key, bucket path
 
 **Semantic Path**:
-A repository path organized by the thing the asset represents, such as country, tournament, team, logo, jersey, or edition.
+A repository path organized by the thing the asset represents, such as country, tournament, team, logo, jersey, or edition. Catalog-backed entity folders use the matching Prool catalog key when one exists; otherwise, new entity folders use kebab-case.
 _Avoid_: Provider path, arbitrary folder
 
 **Asset Version**:

@@ -63,10 +63,10 @@ Use the effective date as the version for legal documents, such as `2026-06-26.p
 
 ## Naming Rules
 
-- Use lowercase kebab-case path segments.
-- Use only ASCII letters, numbers, and hyphens in slugs.
+- Use existing Prool catalog keys for entity folders when they exist, such as `aston_villa` or `manchester_united`.
+- Use kebab-case for new entity folders that do not yet have a canonical catalog key.
+- Use only lowercase ASCII letters, numbers, underscores, and hyphens in path segments.
 - Do not use spaces.
-- Do not use underscores.
 - Do not use provider IDs in public paths.
 - Use singular asset-kind folders, such as `logo` and `jersey`.
 - Keep slugs stable after publication.
