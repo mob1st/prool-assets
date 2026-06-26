@@ -29,9 +29,8 @@ Top-level folders group assets by family:
 ```text
 images/      image assets such as logos, jerseys, icons, and illustrations
 documents/   public document assets such as legal PDFs
-animations/  animation assets such as Lottie or short media exports
+animations/  Lottie JSON animation assets
 data/        static public JSON data
-fonts/       font files
 ```
 
 ```text
@@ -94,17 +93,16 @@ If a file has already been published and needs correction, add a new version and
 
 ## File Formats
 
-Use the format that best matches the asset:
+Publishable formats are intentionally narrow:
 
-- `svg` for reviewable vector assets such as logos, icons, and simplified jerseys.
-- `png`, `webp`, `avif`, `jpg`, or `jpeg` for raster exports.
-- `pdf` for published document assets.
-- `json` for static public data and Lottie JSON when the file is reasonably reviewable.
-- `lottie`, `mp4`, `webm`, or `mov` for packaged animation and media exports.
-- `woff2`, `woff`, `ttf`, or `otf` for fonts.
-- Editable source files such as `psd`, `ai`, `fig`, `sketch`, or `afdesign` may be stored when needed to reproduce exports.
+- `images/`: `svg`, `webp`
+- `documents/`: `pdf`
+- `animations/`: `json`
+- `data/`: `json`
 
-SVG and JSON files remain normal Git text files so reviewers can inspect changes. Binary exports, fonts, documents, media, and editable source files are tracked with Git LFS via `.gitattributes`.
+The deployment workflow enforces the same mapping through `ASSET_FORMAT_RULES`.
+
+SVG and JSON files remain normal Git text files so reviewers can inspect changes. Binary exports, documents, and editable source files are tracked with Git LFS via `.gitattributes`.
 
 Static JSON is public and cacheable. Do not use this repository as a substitute for backend-owned catalog data or user-specific API responses.
 
@@ -127,7 +125,7 @@ Install Git LFS before adding binary asset or source files:
 git lfs install
 ```
 
-The repository tracks binary exports, fonts, documents, media, and editable source files through Git LFS. After adding a binary asset, confirm it is stored as an LFS pointer before opening a pull request:
+The repository tracks binary exports, documents, and editable source files through Git LFS. After adding a binary asset, confirm it is stored as an LFS pointer before opening a pull request:
 
 ```sh
 git lfs status
@@ -144,23 +142,13 @@ git lfs status
 
 ## Deployment
 
-Deployment is intentionally merge-driven for asset changes. After a pull request that changes public assets is merged, automation syncs repository assets to Cloudflare R2, where they are served through the public asset CDN.
+Deployment is merge-driven. After reviewed asset changes land on `main`, GitHub Actions publishes the changed asset files to Cloudflare R2, where they are served from `https://assets.playprool.com`.
 
-The deployment workflow runs on pushes to `main` only when files under public asset roots change. Manual workflow runs can be used to bootstrap or backfill already-merged assets, retry deployment, sync a specific folder, or verify a specific asset URL.
+For the publishing decision and URL mapping rules, see [ADR 0001](docs/adr/0001-publish-assets-to-r2-backed-cdn.md).
+
+Manual workflow runs require an explicit `asset_path`: use `/images/.../file.svg` for one file or `/images/.../*` for a recursive folder upload.
 
 Deployment behavior is implemented in `scripts/deploy-assets-to-r2.sh`.
-
-The workflow uploads files from these top-level asset roots:
-
-```text
-images/
-documents/
-animations/
-data/
-fonts/
-```
-
-`README.md` files and local system files such as `.DS_Store` are not uploaded.
 
 ### GitHub Configuration
 
@@ -173,19 +161,13 @@ R2_SECRET_ACCESS_KEY
 R2_BUCKET
 ```
 
-Configure these GitHub repository variables:
-
-```text
-VERIFY_ASSET_PATH
-```
-
-`R2_BUCKET` should be set to `assets`. `VERIFY_ASSET_PATH` is optional. When it is not configured, deployment still uploads assets and skips public URL verification.
+`R2_BUCKET` should be set to `assets`.
 
 ### Deployment Behavior
 
 The workflow uploads missing asset files to R2 and never deletes remote objects. Existing R2 objects are not overwritten, so published versioned URLs remain immutable.
 
-Uploads are recursive. A normal automatic deploy uploads every file nested under each public asset root. A manual run can also provide an optional `asset_prefix`, such as `images/country/england`, to upload only that folder and everything nested inside it.
+Allowed publish formats are listed in `.github/workflows/deploy-assets-to-r2.yml` as `ASSET_FORMAT_RULES`.
 
 All uploaded files use:
 
@@ -197,4 +179,4 @@ Cache-Control: public, max-age=31536000, immutable
 
 If deployment fails before upload, check that all required secrets and `R2_BUCKET` are configured. If uploads fail with an authorization or endpoint error, confirm the Cloudflare account ID, R2 token permissions, and bucket name.
 
-If the final verification step fails, open the expected Public Asset URL directly and confirm the R2 custom domain is configured for `ASSET_CDN_ROOT`. You can also run the workflow manually with a different `verify_asset_path` value.
+If a manual deployment fails, confirm `asset_path` points to an existing file or to an existing folder ending in `/*`.
