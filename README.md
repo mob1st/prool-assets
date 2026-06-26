@@ -146,7 +146,17 @@ git lfs status
 
 Deployment is intentionally merge-driven for asset changes. After a pull request that changes public assets is merged, automation syncs repository assets to Cloudflare R2, where they are served through the public asset CDN.
 
-The deployment workflow runs on pushes to `main` only when files under public asset roots change. Manual workflow runs can be used to bootstrap or backfill already-merged assets, retry deployment, sync a specific folder, or verify a specific asset URL.
+The deployment workflow runs on pushes to `main` only when files under public asset roots change. Push-triggered runs upload the changed asset files from that push.
+
+Manual workflow runs require an explicit `asset_path`:
+
+```text
+/images/country/england/teams/arsenal/jersey/2026-27.svg
+/images/country/england/teams/arsenal/*
+/images/*
+```
+
+Use a file path to upload one file. Use a folder path ending in `/*` to upload that folder recursively. Empty input is not allowed.
 
 Deployment behavior is implemented in `scripts/deploy-assets-to-r2.sh`.
 
@@ -173,19 +183,13 @@ R2_SECRET_ACCESS_KEY
 R2_BUCKET
 ```
 
-Configure these GitHub repository variables:
-
-```text
-VERIFY_ASSET_PATH
-```
-
-`R2_BUCKET` should be set to `assets`. `VERIFY_ASSET_PATH` is optional. When it is not configured, deployment still uploads assets and skips public URL verification.
+`R2_BUCKET` should be set to `assets`.
 
 ### Deployment Behavior
 
 The workflow uploads missing asset files to R2 and never deletes remote objects. Existing R2 objects are not overwritten, so published versioned URLs remain immutable.
 
-Uploads are recursive. A normal automatic deploy uploads every file nested under each public asset root. A manual run can also provide an optional `asset_prefix`, such as `images/country/england`, to upload only that folder and everything nested inside it.
+Manual folder uploads are recursive only when the path ends in `/*`. Without `*`, the path is interpreted as a single file and fails if it points to a folder.
 
 All uploaded files use:
 
@@ -197,4 +201,4 @@ Cache-Control: public, max-age=31536000, immutable
 
 If deployment fails before upload, check that all required secrets and `R2_BUCKET` are configured. If uploads fail with an authorization or endpoint error, confirm the Cloudflare account ID, R2 token permissions, and bucket name.
 
-If the final verification step fails, open the expected Public Asset URL directly and confirm the R2 custom domain is configured for `ASSET_CDN_ROOT`. You can also run the workflow manually with a different `verify_asset_path` value.
+If a manual deployment fails, confirm `asset_path` points to an existing file or to an existing folder ending in `/*`.
