@@ -5,18 +5,16 @@ on:
     branches:
       - main
     paths:
-      - "images/**"
-      - "documents/**"
-      - "animations/**"
-      - "data/**"
-      - "!images/README.md"
-      - "!images/**/README.md"
-      - "!documents/README.md"
-      - "!documents/**/README.md"
-      - "!animations/README.md"
-      - "!animations/**/README.md"
-      - "!data/README.md"
-      - "!data/**/README.md"
+      - "images/*.svg"
+      - "images/**/*.svg"
+      - "images/*.webp"
+      - "images/**/*.webp"
+      - "documents/*.pdf"
+      - "documents/**/*.pdf"
+      - "animations/*.json"
+      - "animations/**/*.json"
+      - "data/*.json"
+      - "data/**/*.json"
   workflow_dispatch:
     inputs:
       asset_path:
@@ -39,7 +37,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
-      ASSET_FORMAT_RULES: "images=svg,webp documents=pdf animations=mp4,webm,mov data=json"
+      ASSET_FORMAT_RULES: "images=svg,webp documents=pdf animations=json data=json"
       ASSET_PATH: ${{ github.event.inputs.asset_path || '' }}
       ASSET_ROOTS: "images documents animations data"
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

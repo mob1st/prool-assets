@@ -29,7 +29,7 @@ Top-level folders group assets by family:
 ```text
 images/      image assets such as logos, jerseys, icons, and illustrations
 documents/   public document assets such as legal PDFs
-animations/  short media exports
+animations/  Lottie JSON animation assets
 data/        static public JSON data
 ```
 
@@ -97,12 +97,12 @@ Publishable formats are intentionally narrow:
 
 - `images/`: `svg`, `webp`
 - `documents/`: `pdf`
-- `animations/`: `mp4`, `webm`, `mov`
+- `animations/`: `json`
 - `data/`: `json`
 
 The deployment workflow enforces the same mapping through `ASSET_FORMAT_RULES`.
 
-SVG and JSON files remain normal Git text files so reviewers can inspect changes. Binary exports, documents, media, and editable source files are tracked with Git LFS via `.gitattributes`.
+SVG and JSON files remain normal Git text files so reviewers can inspect changes. Binary exports, documents, and editable source files are tracked with Git LFS via `.gitattributes`.
 
 Static JSON is public and cacheable. Do not use this repository as a substitute for backend-owned catalog data or user-specific API responses.
 
@@ -125,7 +125,7 @@ Install Git LFS before adding binary asset or source files:
 git lfs install
 ```
 
-The repository tracks binary exports, documents, media, and editable source files through Git LFS. After adding a binary asset, confirm it is stored as an LFS pointer before opening a pull request:
+The repository tracks binary exports, documents, and editable source files through Git LFS. After adding a binary asset, confirm it is stored as an LFS pointer before opening a pull request:
 
 ```sh
 git lfs status

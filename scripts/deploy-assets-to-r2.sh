@@ -4,7 +4,7 @@ set -euo pipefail
 # This script is run by GitHub Actions after reviewed assets land on main, or
 # when someone manually dispatches the workflow for a specific file/folder sync.
 
-ASSET_FORMAT_RULES="${ASSET_FORMAT_RULES:-images=svg,webp documents=pdf animations=mp4,webm,mov data=json}"
+ASSET_FORMAT_RULES="${ASSET_FORMAT_RULES:-images=svg,webp documents=pdf animations=json data=json}"
 ASSET_PATH="${ASSET_PATH:-}"
 ASSET_ROOTS="${ASSET_ROOTS:-images documents animations data}"
 PUSH_BEFORE_SHA="${PUSH_BEFORE_SHA:-}"
