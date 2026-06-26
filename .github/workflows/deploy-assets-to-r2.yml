@@ -5,15 +5,10 @@ on:
     branches:
       - main
     paths:
-      - "images/*.svg"
       - "images/**/*.svg"
-      - "images/*.webp"
       - "images/**/*.webp"
-      - "documents/*.pdf"
       - "documents/**/*.pdf"
-      - "animations/*.json"
       - "animations/**/*.json"
-      - "data/*.json"
       - "data/**/*.json"
   workflow_dispatch:
     inputs:
