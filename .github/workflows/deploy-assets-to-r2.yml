@@ -9,7 +9,6 @@ on:
       - "documents/**"
       - "animations/**"
       - "data/**"
-      - "fonts/**"
       - "!images/README.md"
       - "!images/**/README.md"
       - "!documents/README.md"
@@ -18,8 +17,6 @@ on:
       - "!animations/**/README.md"
       - "!data/README.md"
       - "!data/**/README.md"
-      - "!fonts/README.md"
-      - "!fonts/**/README.md"
   workflow_dispatch:
     inputs:
       asset_path:
@@ -42,9 +39,9 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
-      ALLOWED_ASSET_EXTENSIONS: "svg png webp avif jpg jpeg pdf json lottie mp4 webm mov woff2 woff ttf otf"
+      ASSET_FORMAT_RULES: "images=svg,webp documents=pdf animations=mp4,webm,mov data=json"
       ASSET_PATH: ${{ github.event.inputs.asset_path || '' }}
-      ASSET_ROOTS: "images documents animations data fonts"
+      ASSET_ROOTS: "images documents animations data"
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       PUSH_BEFORE_SHA: ${{ github.event.before || '' }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}

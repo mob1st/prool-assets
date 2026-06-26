@@ -4,9 +4,9 @@ set -euo pipefail
 # This script is run by GitHub Actions after reviewed assets land on main, or
 # when someone manually dispatches the workflow for a specific file/folder sync.
 
-ALLOWED_ASSET_EXTENSIONS="${ALLOWED_ASSET_EXTENSIONS:-svg png webp avif jpg jpeg pdf json lottie mp4 webm mov woff2 woff ttf otf}"
+ASSET_FORMAT_RULES="${ASSET_FORMAT_RULES:-images=svg,webp documents=pdf animations=mp4,webm,mov data=json}"
 ASSET_PATH="${ASSET_PATH:-}"
-ASSET_ROOTS="${ASSET_ROOTS:-images documents animations data fonts}"
+ASSET_ROOTS="${ASSET_ROOTS:-images documents animations data}"
 PUSH_BEFORE_SHA="${PUSH_BEFORE_SHA:-}"
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-auto}"
 
@@ -27,8 +27,8 @@ validate_configuration() {
   require_env "CLOUDFLARE_ACCOUNT_ID"
   require_env "R2_BUCKET"
 
-  if [[ -z "${ALLOWED_ASSET_EXTENSIONS//[[:space:]]/}" ]]; then
-    echo "ALLOWED_ASSET_EXTENSIONS must include at least one file extension"
+  if [[ -z "${ASSET_FORMAT_RULES//[[:space:]]/}" ]]; then
+    echo "ASSET_FORMAT_RULES must include at least one root=format list"
     exit 1
   fi
 
@@ -37,17 +37,93 @@ validate_configuration() {
     exit 1
   fi
 
-  build_aws_include_args
+  validate_format_rules
 
   aws --version
   R2_ENDPOINT_URL="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
 }
 
-build_aws_include_args() {
+is_asset_root() {
+  local root="$1"
+  local allowed_root
+
+  for allowed_root in ${ASSET_ROOTS}; do
+    if [[ "${root}" == "${allowed_root}" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+validate_format_rules() {
+  local ext
+  local rule
+  local root
+  local rule_exts
+
+  for rule in ${ASSET_FORMAT_RULES}; do
+    if [[ "${rule}" != *=* ]]; then
+      echo "Invalid ASSET_FORMAT_RULES entry: ${rule}"
+      exit 1
+    fi
+
+    root="${rule%%=*}"
+    rule_exts="${rule#*=}"
+
+    if [[ -z "${root}" || -z "${rule_exts}" ]]; then
+      echo "Invalid ASSET_FORMAT_RULES entry: ${rule}"
+      exit 1
+    fi
+
+    if ! is_asset_root "${root}"; then
+      echo "ASSET_FORMAT_RULES includes unknown root: ${root}"
+      exit 1
+    fi
+
+    for ext in ${rule_exts//,/ }; do
+      if [[ -z "${ext}" || "${ext}" == *"."* || "${ext}" == *"/"* ]]; then
+        echo "Invalid extension in ASSET_FORMAT_RULES entry: ${rule}"
+        exit 1
+      fi
+    done
+  done
+}
+
+asset_root_for_path() {
+  local path="$1"
+
+  printf "%s" "${path%%/*}"
+}
+
+allowed_extensions_for_root() {
+  local root="$1"
+  local rule
+  local rule_root
+
+  for rule in ${ASSET_FORMAT_RULES}; do
+    rule_root="${rule%%=*}"
+    if [[ "${rule_root}" == "${root}" ]]; then
+      printf "%s" "${rule#*=}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+build_aws_include_args_for_root() {
+  local root="$1"
+  local allowed_exts
   local ext
 
+  if ! allowed_exts="$(allowed_extensions_for_root "${root}")"; then
+    echo "No publish formats configured for ${root}/"
+    exit 1
+  fi
+
   AWS_INCLUDE_ARGS=(--exclude "*")
-  for ext in ${ALLOWED_ASSET_EXTENSIONS}; do
+  for ext in ${allowed_exts//,/ }; do
     AWS_INCLUDE_ARGS+=(--include "*.${ext}")
   done
 }
@@ -95,7 +171,9 @@ normalize_asset_path() {
 
 validate_allowed_file_extension() {
   local file="$1"
+  local root
   local ext
+  local allowed_exts
   local allowed_ext
 
   if [[ "${file}" != *.* ]]; then
@@ -103,15 +181,34 @@ validate_allowed_file_extension() {
     exit 1
   fi
 
+  root="$(asset_root_for_path "${file}")"
+  if ! allowed_exts="$(allowed_extensions_for_root "${root}")"; then
+    echo "No publish formats configured for ${root}/"
+    exit 1
+  fi
+
   ext="${file##*.}"
-  for allowed_ext in ${ALLOWED_ASSET_EXTENSIONS}; do
+  for allowed_ext in ${allowed_exts//,/ }; do
     if [[ "${ext}" == "${allowed_ext}" ]]; then
       return 0
     fi
   done
 
-  echo "Asset file extension .${ext} is not allowed. Allowed: ${ALLOWED_ASSET_EXTENSIONS}"
+  echo "Asset file extension .${ext} is not allowed under ${root}/. Allowed: ${allowed_exts//,/ }"
   exit 1
+}
+
+validate_folder_file_extensions() {
+  local folder="$1"
+  local file
+
+  while IFS= read -r file; do
+    if is_skipped_file "${file}"; then
+      continue
+    fi
+
+    validate_allowed_file_extension "${file}"
+  done < <(find "${folder}" -type f -print)
 }
 
 upload_file() {
@@ -147,11 +244,16 @@ upload_file() {
 
 upload_folder() {
   local folder="$1"
+  local root
 
   if [[ ! -d "${folder}" ]]; then
     echo "Asset folder does not exist: ${folder}"
     exit 1
   fi
+
+  root="$(asset_root_for_path "${folder}")"
+  validate_folder_file_extensions "${folder}"
+  build_aws_include_args_for_root "${root}"
 
   echo "Uploading folder ${folder}/ to R2 bucket ${R2_BUCKET}"
 

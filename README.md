@@ -29,9 +29,8 @@ Top-level folders group assets by family:
 ```text
 images/      image assets such as logos, jerseys, icons, and illustrations
 documents/   public document assets such as legal PDFs
-animations/  animation assets such as Lottie or short media exports
+animations/  short media exports
 data/        static public JSON data
-fonts/       font files
 ```
 
 ```text
@@ -94,17 +93,16 @@ If a file has already been published and needs correction, add a new version and
 
 ## File Formats
 
-Use the format that best matches the asset:
+Publishable formats are intentionally narrow:
 
-- `svg` for reviewable vector assets such as logos, icons, and simplified jerseys.
-- `png`, `webp`, `avif`, `jpg`, or `jpeg` for raster exports.
-- `pdf` for published document assets.
-- `json` for static public data and Lottie JSON when the file is reasonably reviewable.
-- `lottie`, `mp4`, `webm`, or `mov` for packaged animation and media exports.
-- `woff2`, `woff`, `ttf`, or `otf` for fonts.
-- Editable source files such as `psd`, `ai`, `fig`, `sketch`, or `afdesign` may be stored when needed to reproduce exports.
+- `images/`: `svg`, `webp`
+- `documents/`: `pdf`
+- `animations/`: `mp4`, `webm`, `mov`
+- `data/`: `json`
 
-SVG and JSON files remain normal Git text files so reviewers can inspect changes. Binary exports, fonts, documents, media, and editable source files are tracked with Git LFS via `.gitattributes`.
+The deployment workflow enforces the same mapping through `ASSET_FORMAT_RULES`.
+
+SVG and JSON files remain normal Git text files so reviewers can inspect changes. Binary exports, documents, media, and editable source files are tracked with Git LFS via `.gitattributes`.
 
 Static JSON is public and cacheable. Do not use this repository as a substitute for backend-owned catalog data or user-specific API responses.
 
@@ -127,7 +125,7 @@ Install Git LFS before adding binary asset or source files:
 git lfs install
 ```
 
-The repository tracks binary exports, fonts, documents, media, and editable source files through Git LFS. After adding a binary asset, confirm it is stored as an LFS pointer before opening a pull request:
+The repository tracks binary exports, documents, media, and editable source files through Git LFS. After adding a binary asset, confirm it is stored as an LFS pointer before opening a pull request:
 
 ```sh
 git lfs status
@@ -169,7 +167,7 @@ R2_BUCKET
 
 The workflow uploads missing asset files to R2 and never deletes remote objects. Existing R2 objects are not overwritten, so published versioned URLs remain immutable.
 
-Allowed publish extensions are listed in `.github/workflows/deploy-assets-to-r2.yml` as `ALLOWED_ASSET_EXTENSIONS`.
+Allowed publish formats are listed in `.github/workflows/deploy-assets-to-r2.yml` as `ASSET_FORMAT_RULES`.
 
 All uploaded files use:
 
