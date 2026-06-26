@@ -201,14 +201,23 @@ validate_allowed_file_extension() {
 validate_folder_file_extensions() {
   local folder="$1"
   local file
+  local file_list
 
-  while IFS= read -r file; do
+  file_list="$(mktemp)"
+  trap 'rm -f "${file_list}"' EXIT
+
+  find "${folder}" -type f -print0 > "${file_list}"
+
+  while IFS= read -r -d "" file; do
     if is_skipped_file "${file}"; then
       continue
     fi
 
     validate_allowed_file_extension "${file}"
-  done < <(find "${folder}" -type f -print)
+  done < "${file_list}"
+
+  rm -f "${file_list}"
+  trap - EXIT
 }
 
 upload_file() {
