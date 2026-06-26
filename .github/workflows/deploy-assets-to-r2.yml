@@ -1,0 +1,53 @@
+name: Deploy assets to R2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "images/**"
+      - "documents/**"
+      - "animations/**"
+      - "data/**"
+      - "fonts/**"
+  workflow_dispatch:
+    inputs:
+      asset_prefix:
+        description: "Optional repo folder to upload recursively. Leave empty to upload all asset roots."
+        required: false
+      verify_asset_path:
+        description: "Optional asset file path to verify after deploy."
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-assets-to-r2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Sync reviewed assets
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      ASSET_CDN_ROOT: https://assets.playprool.com
+      ASSET_PREFIX: ${{ github.event.inputs.asset_prefix || '' }}
+      ASSET_ROOTS: "images documents animations data fonts"
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      VERIFY_ASSET_PATH: ${{ github.event.inputs.verify_asset_path || vars.VERIFY_ASSET_PATH || '' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Upload assets to R2
+        shell: bash
+        run: scripts/deploy-assets-to-r2.sh
